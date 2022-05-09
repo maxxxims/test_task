@@ -3,7 +3,13 @@
 #include <iostream>
 #include <cmath>
 #include <tuple>
+#include <gtest/gtest.h>
+
+
 using namespace std;
+
+
+
 
 
 double Deg2rad(double x)
@@ -37,7 +43,7 @@ public:
                 //double c0 = r_p*v_p;
                 double r = a*(1-e*cos(Deg2rad(v)));
                 double x = r * alph, y = r * bet, z = r*gam;
-                cout <<"FUNCTION: " << "X is "<< x <<endl<< "Y is "<< y <<endl<< "Z is "<< z <<endl;
+                //cout <<"FUNCTION: " << "X is "<< x <<endl<< "Y is "<< y <<endl<< "Z is "<< z <<endl;
 
 
                 // speed
@@ -66,7 +72,7 @@ public:
 class CartesianToKepler
         {
 private:
-            double x, y, z, r, vu, exc, omega_y, omega_p, a;
+            double x, y, z, r, i, vu, exc, omega_y, omega_p, a;
             double h[3] = {0,0,0}, e[3] = {0,0,0}, n[3] = {0,0,0};
             double v[3] = {0,0,0};
 public:
@@ -78,11 +84,11 @@ public:
     }
 
 
-    void Calculate()
+    double* Calculate()
     {
         // calc r i
         this-> r = Norm(x,y,z);
-        double i = acos((x*x + y*y) / (r*sqrt(pow(x,2)+pow(y,2))));
+        //this->i = acos((x*x + y*y) / (r*sqrt(pow(x,2)+pow(y,2))));
         double u = asin(z/(r*sin(i)));
 
 
@@ -90,6 +96,10 @@ public:
         h[0] = this->y*this->v[2] - this->z * this->v[1];
         h[1] = -1*(this->x*this->v[2] - this->z * this->v[0]);
         h[2] = this->x*this->v[1] - this->y * this->v[0];
+
+        //calc i
+
+        this->i = acos(h[2] / Norm(h));
 
         //calc vector n
         n[0] = -1*h[1];
@@ -153,12 +163,21 @@ public:
 
         //calc a
         this-> a = 1 / ((2/r) - (Norm(v)* Norm(v) / nu));
-        this-> a *= 0.016608;
+        //this-> a *= 0.016608;
 
         //double a = (r*cos(u) - y) / x;
         //double omega_y = a/sqrt(1+a*a);
         //cout<<"i is "<<Rad2deg(i)<<" u is "<<Rad2deg(u)<<" omega_y is "<<  Rad2deg(omega_y);
-        cout<<"i is "<<Rad2deg(i)<<" v is "<<Rad2deg(vu)<<endl<<" exc is "<<exc<<" OMEGA is "<<Rad2deg(this->omega_y)<<" omega is "<<Rad2deg(this->omega_p)<<" omega is "<<Rad2deg(this->a);
+        double *result = new double[6];
+        result[0] = this->a;
+        result[1] = this->exc;
+        result[2] = Rad2deg(this->i);
+        result[3] = Rad2deg(this->omega_y);
+        result[4] = Rad2deg(this->omega_p);
+        result[5] = Rad2deg(this->vu);
+
+        //cout<<"i is "<<Rad2deg(i)<<" v is "<<Rad2deg(vu)<<endl<<" exc is "<<exc<<" OMEGA is "<<Rad2deg(this->omega_y)<<" omega is "<<Rad2deg(this->omega_p)<<" a"<<this->a;
+        return result;
     }
 
     double Norm(double vec[])
@@ -180,9 +199,23 @@ public:
         };
 
 
+TEST(BasicTest, Kepler2Сartesian){
+    double a = 1.5e4, e = 0.5, i = 88, omega_y = 98, omega_p = 133, v = 56;
+    KeplerToСartesian forward = KeplerToСartesian(a, e, i, omega_y, omega_p, v);
+    double *answer1 = forward.Calculate();
+    CartesianToKepler reverse = CartesianToKepler(answer1[0], answer1[1], answer1[2], answer1[3], answer1[4], answer1[5]);
+    double *answer2 = reverse.Calculate();
+    cout<<"a: "<<a<<" "<<answer2[0]<<" e: "<<e<<" "<<answer2[1]<<" i: "<<i<<" "<<answer2[2]<<" omega_y: "<<omega_y<<" "<<answer2[3]<<" omega_p: "<<omega_p<<" "<<answer2[4]<<" v: "<<v<<" "<<answer2[5]<<endl;
+    ASSERT_NEAR(a, answer2[0], answer2[0]*0.2);
+    ASSERT_NEAR(e, answer2[1], answer2[1]*0.1);
+    ASSERT_NEAR(i, answer2[2], answer2[2]*0.01);
+    ASSERT_NEAR(omega_y, answer2[3], answer2[3]*0.01);
+    ASSERT_NEAR(omega_p, answer2[4], answer2[4]*0.05);
+    ASSERT_NEAR(v, answer2[5], answer2[5]*0.01);
+}
 
 
-int main() {
+int main(int argc, char **argv) {
 
    /*
     // working with the simplest configuration in pericenter
@@ -223,7 +256,7 @@ int main() {
 
     for(int i = 0; i < 6; i++)
     {
-        cout<<"output "<<answer[i]<<" "<<endl;
+        //cout<<"output "<<answer[i]<<" "<<endl;
     }
 
     CartesianToKepler model2 = CartesianToKepler(answer[0], answer[1], answer[2], answer[3], answer[4], answer[5]);
@@ -232,7 +265,6 @@ int main() {
 
     cout<<endl<<endl;
 
-
-
-    return 0;
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
