@@ -9,42 +9,73 @@
 
 
 
+Calculations::Calculations()
+{
 
-double Deg2rad(double x)
+}
+
+double Calculations::Norm(double vec[])
+{
+    return sqrt(pow(vec[0], 2)+pow(vec[1], 2)+pow(vec[2], 2));
+
+}
+
+double  Calculations::Norm(double a, double b, double c)
+{
+    return sqrt(pow(a, 2)+pow(b, 2)+pow(c, 2));
+
+}
+
+double   Calculations::ScalarProduct(double vec1[], double vec2[])
+{
+    return vec1[0]*vec2[0]+vec1[1]*vec2[1]+vec1[2]*vec2[2];
+}
+
+double  Calculations::Deg2rad(double x)
 {
     return M_PI * x / 180;
 }
 
-double Rad2deg(double x)
+
+double  Calculations::Rad2deg(double x)
 {
     return  x * 180 / M_PI;
 }
 
 
+///////////////////////////////KEPLER TO CARTSIAN///////////////////////////////////////////////////////////////////////
 
-KeplerToCartesian::KeplerToCartesian(double a, double e,double i,double omega_y, double omega_p, double v):
-        a(a), e(e), i(i), omega_y(omega_y), omega_p(omega_p), v(v) {}
+KeplerToCartesian::KeplerToCartesian(double a, double e,double i,double omega_y, double omega_p, double v): Calculations()
+{
+    this->a = a;
+    this->exc = e;
+    this->i = i;
+    this->omega_y = omega_y;
+    this->omega_p = omega_p;
+    this->vu = v;
+}
+
 
 double* KeplerToCartesian:: Calculate()
 {
 
     //cordinates
-    this->v = v - this->e*sin(Rad2deg(this->v));
-    double u = v + omega_p;
+    this->vu = vu - this->exc*sin(Rad2deg(this->vu));
+    double u = vu + omega_p;
     double alph = cos(Deg2rad(omega_y))*cos(Deg2rad(u)) - sin(Deg2rad(omega_y))*sin(Deg2rad(u))*cos(Deg2rad(i));
     double bet = sin(Deg2rad(omega_y))*cos(Deg2rad(u)) + cos(Deg2rad(omega_y))*sin(Deg2rad(u))*cos(Deg2rad(i));
     double gam = sin(Deg2rad(u))*sin(Deg2rad(i));
 
-    double p = a*(1-pow(e,2));
-    double r = a*(1-e*cos(Deg2rad(v)));
+    double p = a*(1-pow(exc,2));
+    double r = a*(1-exc*cos(Deg2rad(vu)));
     //r = p/(1-e*cos(Deg2rad(v)));
     double x = r * alph, y = r * bet, z = r*gam;
     //cout <<"FUNCTION: " << "X is "<< x <<endl<< "Y is "<< y <<endl<< "Z is "<< z <<endl;
 
 
     // speed
-    double v_r = sqrt(nu/p)*e*sin(Deg2rad(v));
-    double v_n = sqrt(nu/p)*(1+e*cos(Deg2rad(v)));
+    double v_r = sqrt(nu/p)*exc*sin(Deg2rad(vu));
+    double v_n = sqrt(nu/p)*(1+exc*cos(Deg2rad(vu)));
 
     double *result = new double[6];
     result[3] = cos(Deg2rad(omega_y)) * (v_r * cos(Deg2rad(u)) - v_n* sin(Deg2rad(u))) - sin(Deg2rad(omega_y))*cos(Deg2rad(i)) * (v_r *
@@ -61,10 +92,13 @@ double* KeplerToCartesian:: Calculate()
 }
 
 
+///////////////////////////////CARTSIAN TO KEPLER///////////////////////////////////////////////////////////////////////
 
-
-CartesianToKepler::CartesianToKepler(double x, double y, double z, double v_x, double v_y, double v_z):x(x),y(y),z(z)
+CartesianToKepler::CartesianToKepler(double x, double y, double z, double v_x, double v_y, double v_z): Calculations()
 {
+    this->x = x;
+    this->y = y;
+    this->z = z;
     this->v[0] = v_x;
     this->v[1] = v_y;
     this->v[2] = v_z;
@@ -169,21 +203,4 @@ double* CartesianToKepler::Calculate()
 
     //cout<<"i is "<<Rad2deg(i)<<" v is "<<Rad2deg(vu)<<endl<<" exc is "<<exc<<" OMEGA is "<<Rad2deg(this->omega_y)<<" omega is "<<Rad2deg(this->omega_p)<<" a"<<this->a;
     return result;
-}
-
-double CartesianToKepler::Norm(double vec[])
-{
-    return sqrt(pow(vec[0], 2)+pow(vec[1], 2)+pow(vec[2], 2));
-
-}
-
-double CartesianToKepler::Norm(double a, double b, double c)
-{
-    return sqrt(pow(a, 2)+pow(b, 2)+pow(c, 2));
-
-}
-
-double  CartesianToKepler::ScalarProduct(double vec1[], double vec2[])
-{
-    return vec1[0]*vec2[0]+vec1[1]*vec2[1]+vec1[2]*vec2[2];
 }

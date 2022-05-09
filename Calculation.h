@@ -4,30 +4,44 @@
 
 #ifndef UNTITLED_CALCULATION_H
 #define UNTITLED_CALCULATION_H
-class KeplerToCartesian
+
+class Calculations
 {
-private:
-    double a,e,i,omega_y, omega_p, v;
+protected:
+    double x,y,z, v[3] = {0,0,0}, a, exc, i, omega_y, omega_p, vu;
+
+public:
+    Calculations();
+
+    double Norm(double vec[]);
+    double Norm(double a, double b, double c);
+
+    double  ScalarProduct(double vec1[], double vec2[]);
+
+    double Deg2rad(double x);
+    double Rad2deg(double x);
+};
+
+
+
+class KeplerToCartesian: public Calculations
+{
 public:
     KeplerToCartesian(double a, double e,double i,double omega_y, double omega_p, double v);
     double *Calculate();
 };
 
 
-class CartesianToKepler
+class CartesianToKepler: public Calculations
 {
 private:
-    double x, y, z, r, i, vu, exc, omega_y, omega_p, a;
     double h[3] = {0,0,0}, e[3] = {0,0,0}, n[3] = {0,0,0};
-    double v[3] = {0,0,0};
+    double r, v[3] = {0,0,0};
+
 public:
-    CartesianToKepler(double x, double y, double z, double v_x, double v_y, double v_z);
-    double *Calculate();
+    CartesianToKepler(double a, double e,double i,double omega_y, double omega_p, double v);
 
-    double Norm(double vec[]);
-    double Norm(double a, double b, double c);
-
-    double  ScalarProduct(double vec1[], double vec2[]);
+    double* Calculate();
 };
 
 #endif //UNTITLED_CALCULATION_H

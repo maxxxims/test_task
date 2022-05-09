@@ -6,7 +6,8 @@ using namespace std;
 
 
 TEST(BasicTest1, Kepler2Сartesian){
-    double a = 1.5e3, e = 0.2, i = 5, omega_y = 33, omega_p = 60, v = 133;
+    ///input data
+    double a = 1.5e4, e = 0.2, i = 5, omega_y = 13, omega_p = 268, v = 133;
     double error = 10 / 100.0;
 
     KeplerToCartesian forward = KeplerToCartesian(a, e, i, omega_y, omega_p, v);
@@ -17,18 +18,24 @@ TEST(BasicTest1, Kepler2Сartesian){
 
     cout<<"a: "<<a<<" vs "<<answer2[0]<<"; e: "<<e<<" vs "<<answer2[1]<<"; i: "<<i<<" vs "<<answer2[2]<<endl;
     cout<<"Omega_y: "<<omega_y<<" vs "<<answer2[3]<<"; omega_p: "<<omega_p<<" vs "<<answer2[4]<<"; v: "<<v<<" "<<answer2[5]<<endl;
+
+
     ASSERT_NEAR(a, answer2[0], abs(answer2[0]*error));
     ASSERT_NEAR(e, answer2[1], abs(answer2[1]*error));
     ASSERT_NEAR(i, answer2[2], abs(answer2[2]*error));
     ASSERT_NEAR(omega_y, answer2[3], abs(answer2[3]*error));
     ASSERT_NEAR(omega_p, answer2[4], abs(answer2[4]*error));
-    ASSERT_NEAR(v, answer2[5], 20*abs(answer2[5]*error));
+    ASSERT_NEAR(v, answer2[5], 8*abs(answer2[5]*error));
+
+
+
     delete[] answer1;
     delete[] answer2;
 }
 
 
 TEST(BasicTest2, Сartesian2Kepler){
+    ///input data
     double x = 4236.75, y = -9162.83, z = 10987, v_x = 3.39151, v_y = -2.30412, v_z = -3.17001;
     double error = 5 / 100.0;
 
@@ -40,12 +47,17 @@ TEST(BasicTest2, Сartesian2Kepler){
 
     cout<<"X: "<<x<<" vs "<<answer2[0]<<"; Y: "<<y<<" vs "<<answer2[1]<<"; Z: "<<z<<" vs "<<answer2[2]<<endl;
     cout<<"V_X: "<<v_x<<" vs "<<answer2[3]<<"; V_Y: "<<v_y<<" vs "<<answer2[4]<<"; V_Z: "<<v_z<<" vs "<<answer2[5]<<endl;
+
+
+
     ASSERT_NEAR(x, answer2[0], abs(answer2[0]*error));
     ASSERT_NEAR(y, answer2[1], abs(answer2[1]*error));
     ASSERT_NEAR(z, answer2[2], abs(answer2[2]*error));
     ASSERT_NEAR(v_x, answer2[3], abs(answer2[3]*error));
     ASSERT_NEAR(v_y, answer2[4], abs(answer2[4]*error));
     ASSERT_NEAR(v_z, answer2[5], abs(answer2[5]*error));
+
+
     delete[] answer1;
     delete[] answer2;
 }
