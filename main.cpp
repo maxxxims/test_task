@@ -1,11 +1,9 @@
 # define M_PI           3.14159265358979323846  /* pi */
-# define nu             398600.4                /* grav parameter */
+# define nu             398600.4               /* grav parameter */
 #include <iostream>
 #include <cmath>
 #include <tuple>
 #include <gtest/gtest.h>
-
-
 using namespace std;
 
 
@@ -35,19 +33,20 @@ public:
             {
 
                 //cordinates
+                this->v = v - this->e*sin(Rad2deg(this->v));
                 double u = v + omega_p;
                 double alph = cos(Deg2rad(omega_y))*cos(Deg2rad(u)) - sin(Deg2rad(omega_y))*sin(Deg2rad(u))*cos(Deg2rad(i));
                 double bet = sin(Deg2rad(omega_y))*cos(Deg2rad(u)) + cos(Deg2rad(omega_y))*sin(Deg2rad(u))*cos(Deg2rad(i));
                 double gam = sin(Deg2rad(u))*sin(Deg2rad(i));
-                //double v_p = sqrt(k*e/(a*(1-e))), r_p = a*(1-e);
-                //double c0 = r_p*v_p;
+
+                double p = a*(1-pow(e,2));
                 double r = a*(1-e*cos(Deg2rad(v)));
+                //r = p/(1-e*cos(Deg2rad(v)));
                 double x = r * alph, y = r * bet, z = r*gam;
                 //cout <<"FUNCTION: " << "X is "<< x <<endl<< "Y is "<< y <<endl<< "Z is "<< z <<endl;
 
 
                 // speed
-                double p = a*(1-pow(e,2));
                 double v_r = sqrt(nu/p)*e*sin(Deg2rad(v));
                 double v_n = sqrt(nu/p)*(1+e*cos(Deg2rad(v)));
 
@@ -57,7 +56,7 @@ public:
                 result[4] = sin(Deg2rad(omega_y)) * (v_r * cos(Deg2rad(u)) - v_n* sin(Deg2rad(u))) + cos(Deg2rad(omega_y))*cos(Deg2rad(i)) * (v_r *
                                                                                                                                              sin(Deg2rad(u)) + v_n*cos(Deg2rad(u)));
                 result[5] = sin(Deg2rad(i))*(v_r * sin(Deg2rad(u)) + v_n*cos(Deg2rad(u)));
-
+                //cout <<"FUNCTION: " << "X is "<< result[] <<endl<< "Y is "<< y <<endl<< "Z is "<< z <<endl;
 
                 result[0] = x;
                 result[1] = y;
@@ -89,7 +88,7 @@ public:
         // calc r i
         this-> r = Norm(x,y,z);
         //this->i = acos((x*x + y*y) / (r*sqrt(pow(x,2)+pow(y,2))));
-        double u = asin(z/(r*sin(i)));
+        //double u = asin(z/(r*sin(i)));
 
 
         // calc vector h
@@ -165,6 +164,11 @@ public:
         this-> a = 1 / ((2/r) - (Norm(v)* Norm(v) / nu));
         //this-> a *= 0.016608;
 
+
+        //calc mean anomaly
+        double E = 2*atan(tan(vu/2) / sqrt((1+exc)/(1-exc)));
+        vu = E;
+
         //double a = (r*cos(u) - y) / x;
         //double omega_y = a/sqrt(1+a*a);
         //cout<<"i is "<<Rad2deg(i)<<" u is "<<Rad2deg(u)<<" omega_y is "<<  Rad2deg(omega_y);
@@ -199,71 +203,99 @@ public:
         };
 
 
-TEST(BasicTest, Kepler2Сartesian){
-    double a = 1.5e4, e = 0.5, i = 88, omega_y = 98, omega_p = 133, v = 56;
+TEST(BasicTest1, Kepler2Сartesian){
+    double a = 1.5e3, e = 0.2, i = 5, omega_y = 33, omega_p = 60, v = 133;
+    double error = 10 / 100.0;
+
     KeplerToСartesian forward = KeplerToСartesian(a, e, i, omega_y, omega_p, v);
     double *answer1 = forward.Calculate();
+
     CartesianToKepler reverse = CartesianToKepler(answer1[0], answer1[1], answer1[2], answer1[3], answer1[4], answer1[5]);
     double *answer2 = reverse.Calculate();
-    cout<<"a: "<<a<<" "<<answer2[0]<<" e: "<<e<<" "<<answer2[1]<<" i: "<<i<<" "<<answer2[2]<<" omega_y: "<<omega_y<<" "<<answer2[3]<<" omega_p: "<<omega_p<<" "<<answer2[4]<<" v: "<<v<<" "<<answer2[5]<<endl;
-    ASSERT_NEAR(a, answer2[0], answer2[0]*0.2);
-    ASSERT_NEAR(e, answer2[1], answer2[1]*0.1);
-    ASSERT_NEAR(i, answer2[2], answer2[2]*0.01);
-    ASSERT_NEAR(omega_y, answer2[3], answer2[3]*0.01);
-    ASSERT_NEAR(omega_p, answer2[4], answer2[4]*0.05);
-    ASSERT_NEAR(v, answer2[5], answer2[5]*0.01);
+
+    cout<<"a: "<<a<<" vs "<<answer2[0]<<"; e: "<<e<<" vs "<<answer2[1]<<"; i: "<<i<<" vs "<<answer2[2]<<endl;
+    cout<<"Omega_y: "<<omega_y<<" vs "<<answer2[3]<<"; omega_p: "<<omega_p<<" vs "<<answer2[4]<<"; v: "<<v<<" "<<answer2[5]<<endl;
+    ASSERT_NEAR(a, answer2[0], abs(answer2[0]*error));
+    ASSERT_NEAR(e, answer2[1], abs(answer2[1]*error));
+    ASSERT_NEAR(i, answer2[2], abs(answer2[2]*error));
+    ASSERT_NEAR(omega_y, answer2[3], abs(answer2[3]*error));
+    ASSERT_NEAR(omega_p, answer2[4], abs(answer2[4]*error));
+    ASSERT_NEAR(v, answer2[5], 20*abs(answer2[5]*error));
+    delete[] answer1;
+    delete[] answer2;
+}
+
+
+TEST(BasicTest2, Сartesian2Kepler){
+    double x = 4236.75, y = -9162.83, z = 10987, v_x = 3.39151, v_y = -2.30412, v_z = -3.17001;
+    double error = 5 / 100.0;
+
+    CartesianToKepler model_foward = CartesianToKepler(x, y, z, v_x, v_y, v_z);
+    double *answer1 = model_foward.Calculate();
+
+    KeplerToСartesian model_reverse = KeplerToСartesian(answer1[0], answer1[1], answer1[2], answer1[3], answer1[4], answer1[5]);
+    double *answer2 = model_reverse.Calculate();
+
+    cout<<"X: "<<x<<" vs "<<answer2[0]<<"; Y: "<<y<<" vs "<<answer2[1]<<"; Z: "<<z<<" vs "<<answer2[2]<<endl;
+    cout<<"V_X: "<<v_x<<" vs "<<answer2[3]<<"; V_Y: "<<v_y<<" vs "<<answer2[4]<<"; V_Z: "<<v_z<<" vs "<<answer2[5]<<endl;
+    ASSERT_NEAR(x, answer2[0], abs(answer2[0]*error));
+    ASSERT_NEAR(y, answer2[1], abs(answer2[1]*error));
+    ASSERT_NEAR(z, answer2[2], abs(answer2[2]*error));
+    ASSERT_NEAR(v_x, answer2[3], abs(answer2[3]*error));
+    ASSERT_NEAR(v_y, answer2[4], abs(answer2[4]*error));
+    ASSERT_NEAR(v_z, answer2[5], abs(answer2[5]*error));
+    delete[] answer1;
+    delete[] answer2;
 }
 
 
 int main(int argc, char **argv) {
 
+
+
    /*
-    // working with the simplest configuration in pericenter
-    double a = 1, e = 0.2, i = 5, omega_y = 0, omega_p = 90+180, v = 0, k = 3.986e14;
-    //cout << k;
-    double u = v + omega_p;
-    double alph = cos(Deg2rad(omega_y))*cos(Deg2rad(u)) - sin(Deg2rad(omega_y))*sin(Deg2rad(u))*cos(Deg2rad(i));
-    double bet = sin(Deg2rad(omega_y))*cos(Deg2rad(u)) + cos(Deg2rad(omega_y))*sin(Deg2rad(u))*cos(Deg2rad(i));
-    double gam = sin(Deg2rad(u))*sin(Deg2rad(i));
-    double v_p = sqrt(k*e/(a*(1-e))), r_p = a*(1-e);
-    double c0 = r_p*v_p;
-    //double p = c0*c0/k;
 
-    double p = a*(1-pow(e,2));
-    //double r2 = p/(1-e*cos(Deg2rad(v)));    // why + ?????
-    double r2 = a*(1-e*cos(Deg2rad(v)));
-    //double r2 = sqrt(r2_*r2_ - (a-r_p)*(a-r_p) - 2*r2_*(a-r_p)*cos(Deg2rad(v)));
-    //double r2 = ( -2*(a-r_p)*cos(Deg2rad(v))   +  sqrt(  4*pow((a-r_p)*cos(Deg2rad(v)),2)   -4*(pow(a-r_p, 2)-pow(r2_,2))))/2;
-
-
-
-    double r = a*(1+e);
-    cout<<"r2 is"<< r2 << endl;
-    cout<<"r is"<< r << endl;
-
-    double x = r * alph, y = r * bet, z = r*gam;
-    cout << "X is "<< x <<endl<< "Y is "<< y <<endl<< "Z is "<< z <<endl;
-    cout<<endl;
-
-    x = r2 * alph, y = r2 * bet, z = r2*gam;
-    cout << "X is "<< x <<endl<< "Y is "<< y <<endl<< "Z is "<< z <<endl; */
-
-
-    double a = 15e3, e = 0.01, i = 74, omega_y = 133, omega_p = 72, v = 29;
+    double a = 15e3, e = 0.01, i = 74, omega_y = 133, omega_p = 72, v = 58;
 
     KeplerToСartesian model = KeplerToСartesian(a, e, i, omega_y, omega_p, v);
     double *answer = model.Calculate();
 
     for(int i = 0; i < 6; i++)
     {
-        //cout<<"output "<<answer[i]<<" "<<endl;
+        cout<<"output "<<answer[i]<<" "<<endl;
     }
 
     CartesianToKepler model2 = CartesianToKepler(answer[0], answer[1], answer[2], answer[3], answer[4], answer[5]);
-    model2.Calculate();
+    double *answer2 = model2.Calculate();
+
+    for(int i = 0; i < 6; i++)
+    {
+        cout<<"output2 "<<answer2[i]<<" "<<endl;
+    }
     delete[] answer;
 
-    cout<<endl<<endl;
+
+
+    double a = 4236.75, e = -9162.83, i = 10987, omega_y = 3.39151, omega_p = -2.30412, v = -3.17001;
+
+    CartesianToKepler model = CartesianToKepler(a, e, i, omega_y, omega_p, v);
+    double *answer = model.Calculate();
+
+    for(int i = 0; i < 6; i++)
+    {
+        cout<<"output "<<answer[i]<<" "<<endl;
+    }
+
+    KeplerToСartesian model2 = KeplerToСartesian(answer[0], answer[1], answer[2], answer[3], answer[4], answer[5]);
+    double *answer2 = model2.Calculate();
+
+    for(int i = 0; i < 6; i++)
+    {
+        cout<<"output2 "<<answer2[i]<<" "<<endl;
+    }
+    delete[] answer;
+
+    cout<<endl<<endl; */
 
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
