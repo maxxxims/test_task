@@ -6,13 +6,10 @@
 # define M_PI           3.14159265358979323846  /* pi */
 # define nu             398600.4               /* grav parameter */
 #include <cmath>
+#include <stdexcept>
 
 
-
-Calculations::Calculations()
-{
-
-}
+Calculations::Calculations(){}
 
 double Calculations::Norm(double vec[])
 {
@@ -53,6 +50,8 @@ KeplerToCartesian::KeplerToCartesian(double a, double e,double i,double omega_y,
     this->omega_y = omega_y;
     this->omega_p = omega_p;
     this->vu = v;
+    if(i == 0 )     throw std::logic_error("Error: The longitude of the ascending node and the argument of the pericenter cannot be determined, wrong data! ");
+    if(a <= 0 || e <= 0)     throw std::logic_error("Error: Wrong data! ");
 }
 
 
@@ -60,7 +59,7 @@ double* KeplerToCartesian:: Calculate()
 {
 
     //cordinates
-    this->vu = vu - this->exc*sin(Rad2deg(this->vu));
+    //this->vu = vu - this->exc*sin(Rad2deg(this->vu));
     double u = vu + omega_p;
     double alph = cos(Deg2rad(omega_y))*cos(Deg2rad(u)) - sin(Deg2rad(omega_y))*sin(Deg2rad(u))*cos(Deg2rad(i));
     double bet = sin(Deg2rad(omega_y))*cos(Deg2rad(u)) + cos(Deg2rad(omega_y))*sin(Deg2rad(u))*cos(Deg2rad(i));
@@ -70,10 +69,10 @@ double* KeplerToCartesian:: Calculate()
     double r = a*(1-exc*cos(Deg2rad(vu)));
     //r = p/(1-e*cos(Deg2rad(v)));
     double x = r * alph, y = r * bet, z = r*gam;
-    //cout <<"FUNCTION: " << "X is "<< x <<endl<< "Y is "<< y <<endl<< "Z is "<< z <<endl;
 
 
-    // speed
+
+    // speed in polar coordinates
     double v_r = sqrt(nu/p)*exc*sin(Deg2rad(vu));
     double v_n = sqrt(nu/p)*(1+exc*cos(Deg2rad(vu)));
 
@@ -83,7 +82,7 @@ double* KeplerToCartesian:: Calculate()
     result[4] = sin(Deg2rad(omega_y)) * (v_r * cos(Deg2rad(u)) - v_n* sin(Deg2rad(u))) + cos(Deg2rad(omega_y))*cos(Deg2rad(i)) * (v_r *
                                                                                                                                   sin(Deg2rad(u)) + v_n*cos(Deg2rad(u)));
     result[5] = sin(Deg2rad(i))*(v_r * sin(Deg2rad(u)) + v_n*cos(Deg2rad(u)));
-    //cout <<"FUNCTION: " << "X is "<< result[] <<endl<< "Y is "<< y <<endl<< "Z is "<< z <<endl;
+
 
     result[0] = x;
     result[1] = y;
@@ -119,7 +118,6 @@ double* CartesianToKepler::Calculate()
     h[2] = this->x*this->v[1] - this->y * this->v[0];
 
     //calc i
-
     this->i = acos(h[2] / Norm(h));
 
     //calc vector n
@@ -159,7 +157,6 @@ double* CartesianToKepler::Calculate()
 
 
     //calc omega_y
-    //cout<<n[0]<<" "<<n[1]<<" "<<Norm(n)<<" "<<n[0] / Norm(n)<<endl;
     if(n[1] >= 0)
     {
         this->omega_y = acos(n[0] / Norm(n));
@@ -170,7 +167,6 @@ double* CartesianToKepler::Calculate()
     }
 
     //calc omega_p
-    //cout<<e[0]<<" "<<e[1]<<" "<<Norm(e)<<" "<<ScalarProduct(e,n)<<" "<< Norm(e) * Norm(n) <<endl;
     if(e[2] >= 0)
     {
         this->omega_p = acos(ScalarProduct(this->e,this->n) / (Norm(this->n)* Norm(this->e)));
@@ -183,16 +179,13 @@ double* CartesianToKepler::Calculate()
 
     //calc a
     this-> a = 1 / ((2/r) - (Norm(v)* Norm(v) / nu));
-    //this-> a *= 0.016608;
 
 
     //calc mean anomaly
     double E = 2*atan(tan(vu/2) / sqrt((1+exc)/(1-exc)));
-    vu = E;
+    this->vu = E;
 
-    //double a = (r*cos(u) - y) / x;
-    //double omega_y = a/sqrt(1+a*a);
-    //cout<<"i is "<<Rad2deg(i)<<" u is "<<Rad2deg(u)<<" omega_y is "<<  Rad2deg(omega_y);
+
     double *result = new double[6];
     result[0] = this->a;
     result[1] = this->exc;
